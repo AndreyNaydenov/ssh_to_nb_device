@@ -1,0 +1,10 @@
+certifi==2024.12.14
+charset-normalizer==3.4.1
+idna==3.10
+nbcli==0.10.0.dev2
+packaging==24.2
+pynetbox==7.4.1
+PyYAML==6.0.2
+requests==2.32.3
+setuptools==75.8.0
+urllib3==2.3.0

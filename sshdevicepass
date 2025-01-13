@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+# Enable this to debug
+# set -x
+
+# Check that bitwarden vault is unlocked
+if [ $(bw status | jq ."status" | tr -d '"') != "unlocked" ]; then
+	echo 'Bitwarden vault is locked, please run "bw unlock"' >&2
+	exit 1
+fi
+
+# Get list of active devices that have primary IP address
+ip_address="$(nbcli filter device has_primary_ip=True status=active --dl --cols name primary_ip | fzf | cut -w -f 2 | cut -d "/" -f 1)"
+
+# Get names of all credentials from Bitwarden
+password_name=$(bw list items | jq '.[].name' | fzf | tr -d '"')
+
+# Get password from Bitwarden
+password=$(bw get password "$password_name")
+
+# Connect to device using password
+SSHPASS=$password sshpass -e ssh -J noc $ip_address
+
