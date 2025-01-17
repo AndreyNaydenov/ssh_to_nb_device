@@ -13,12 +13,12 @@ else
 fi
 
 # Get BW status
-bw_status=$(bw status | jq .status)
+bw_status=$(bw status 2>/dev/null | jq .status)
 
 if [ $bw_status = '"unauthenticated"' ]; then
-	BW_SESSION=$(bw login --raw)
+	BW_SESSION=$(bw login --raw 2>/dev/null)
 elif [ $bw_status = '"locked"' ]; then
-	BW_SESSION=$(bw unlock --raw)
+	BW_SESSION=$(bw unlock --raw 2>/dev/null)
 elif [ $bw_status = '"unlocked"' ]; then
 	: #Just pass
 else
@@ -40,10 +40,10 @@ kitty @ --password "$KITTY_REMOTE_PASS" set-tab-title "$device_name"
 # TODO: Check that we have kitty and KITTY_REMOTE_PASS env for that
 
 # Get names of all credentials from Bitwarden
-password_name=$(bw list items | jq '.[].name' | fzf | tr -d '"')
+password_name=$(bw list items 2>/dev/null | jq '.[].name' | fzf | tr -d '"')
 
 # Get password from Bitwarden
-password=$(bw get password "$password_name")
+password=$(bw get password "$password_name" 2>/dev/null)
 
 # Connect to device using password
 SSHPASS=$password sshpass -e ssh -J noc $device_address
