@@ -26,8 +26,18 @@ else
 	exit 1
 fi
 
-# Get list of active devices that have primary IP address
-ip_address="$(nbcli filter device has_primary_ip=True status=active --dl --cols name primary_ip | fzf | cut -w -f 2 | cut -d "/" -f 1)"
+# Save currently unlocked session to file
+echo "$BW_SESSION" > $BW_SESSION_FILE_PATH
+
+# Get list of active devices that have primary IP address and choose target device
+result="$(nbcli filter device has_primary_ip=True status=active --dl --cols name primary_ip | fzf)"
+device_name="$(echo $result | cut -w -f 1)"
+device_address="$(echo $result | cut -w -f 2 | cut -d '/' -f 1)"
+# TODO: Add check that ip_address exists and valid
+
+# Set tab name for visibility
+kitty @ --password "$KITTY_REMOTE_PASS" set-tab-title "$device_name"
+# TODO: Check that we have kitty and KITTY_REMOTE_PASS env for that
 
 # Get names of all credentials from Bitwarden
 password_name=$(bw list items | jq '.[].name' | fzf | tr -d '"')
@@ -36,5 +46,7 @@ password_name=$(bw list items | jq '.[].name' | fzf | tr -d '"')
 password=$(bw get password "$password_name")
 
 # Connect to device using password
-SSHPASS=$password sshpass -e ssh -J noc $ip_address
+SSHPASS=$password sshpass -e ssh -J noc $device_address
 
+# Reset kitty tab name after SSH finished
+kitty @ --password "$KITTY_REMOTE_PASS" set-tab-title ""
