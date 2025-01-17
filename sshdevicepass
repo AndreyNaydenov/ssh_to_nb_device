@@ -3,10 +3,26 @@
 set -e
 # Enable this to debug
 # set -x
+BW_SESSION_FILE_PATH=~/.con
 
-# Check that bitwarden vault is unlocked
-if [ $(bw status | jq ."status" | tr -d '"') != "unlocked" ]; then
-	echo 'Bitwarden vault is locked, please run "bw unlock"' >&2
+# Retrieve previously saved BW_SESSION
+if [ -e $BW_SESSION_FILE_PATH ]; then
+	export BW_SESSION="$(cat $BW_SESSION_FILE_PATH)"
+else
+	echo "File $BW_SESSION_FILE_PATH doesn't exist" >&2
+fi
+
+# Get BW status
+bw_status=$(bw status | jq .status)
+
+if [ $bw_status = '"unauthenticated"' ]; then
+	BW_SESSION=$(bw login --raw)
+elif [ $bw_status = '"locked"' ]; then
+	BW_SESSION=$(bw unlock --raw)
+elif [ $bw_status = '"unlocked"' ]; then
+	: #Just pass
+else
+	echo "Unsupported Bitwarden status: $bw_status" >&2
 	exit 1
 fi
 
